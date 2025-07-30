@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.busroute.mapper.ReportMapper">
+
+
+  <resultMap id="ReportResultMap" type="com.busroute.domain.ReportVO">
+    <result property="report_id" column="report_id"/>
+    <result property="user_id" column="user_id"/>
+    <result property="category" column="category"/>
+    <result property="title" column="title"/>
+    <result property="content" column="content"/>
+    <result property="attachmentPath" column="attachment_path"/>
+    <result property="status" column="status"/>
+	<result property="admin_reply" column="admin_reply"/>
+	<result property="replied_at" column="replied_at"/>
+	<result property="created_at" column="created_at"/>
+    <result property="username" column="username"/>
+  </resultMap>
+
+
+
+<select id="getListWithPaging" resultMap="ReportResultMap" parameterType="map">
+  SELECT * FROM (
+    SELECT @rownum:=@rownum+1 AS rownum, innerTable.*
+    FROM ( 
+      SELECT r.*, u.username
+      FROM tb_report r
+      LEFT JOIN tb_user u ON r.user_id = u.userid
+		<where>
+		  <choose>
+		    <when test='type == "T"'>AND r.title LIKE CONCAT('%', #{keyword}, '%')</when>
+		    <when test='type == "C"'>AND r.content LIKE CONCAT('%', #{keyword}, '%')</when>
+		    <when test='type == "W"'>AND u.username LIKE CONCAT('%', #{keyword}, '%')</when>
+		    <when test='type == "G"'>AND CAST(r.category AS CHAR) LIKE CONCAT('%', #{keyword}, '%')</when>
+		  </choose>
+		
+		  <if test="statusFilter != null and statusFilter != ''">
+		    AND r.status = #{statusFilter}
+		  </if>
+		
+		  <if test="user_id != null and user_id != ''">
+		    AND r.user_id = #{user_id}
+		  </if>
+		</where>
+		ORDER BY
+		  CASE WHEN r.status = '완료' THEN 1 ELSE 0 END ASC,
+		  r.created_at DESC
+    ) AS innerTable, (SELECT @rownum:=0) AS rownumTable
+  ) AS rownumReportList
+  <![CDATA[
+    WHERE rownum > #{pageStart} AND rownum <= (#{pageStart} + #{amount})
+  ]]>
+</select>
+
+<select id="getTotalCount" resultType="int" parameterType="map">
+  SELECT COUNT(*) 
+  FROM tb_report r
+  LEFT JOIN tb_user u ON r.user_id = u.userid
+  <where>
+    <choose>
+      <when test='type == "T"'>AND r.title LIKE CONCAT('%', #{keyword}, '%')</when>
+      <when test='type == "C"'>AND r.content LIKE CONCAT('%', #{keyword}, '%')</when>
+      <when test='type == "W"'>AND u.username LIKE CONCAT('%', #{keyword}, '%')</when>
+      <when test='type == "G"'>AND CAST(r.category AS CHAR) LIKE CONCAT('%', #{keyword}, '%')</when>
+    </choose>
+    <if test="user_id != null and user_id != ''">
+      AND r.user_id = #{user_id}
+    </if>
+  </where>
+</select>
+
+
+	<!-- 상세 조회 -->
+	<select id="read" resultMap="ReportResultMap" parameterType="int">
+	  SELECT r.*, u.username
+	  FROM tb_report r
+	  LEFT JOIN tb_user u ON r.user_id = u.userid
+	  WHERE r.report_id = #{report_id}
+	</select>
+	
+	<!-- 등록 -->
+	<insert id="insertSelectKey" parameterType="com.busroute.domain.ReportVO" useGeneratedKeys="true" keyProperty="report_id">
+	  INSERT INTO tb_report(category, title, content, user_id, attachment_path)
+	  VALUES(#{category}, #{title}, #{content}, #{user_id}, #{attachmentPath})
+	</insert>
+	
+	<!-- 수정 -->
+	<update id="update" parameterType="com.busroute.domain.ReportVO">
+	  UPDATE tb_report
+	  SET title = #{title},
+	      content = #{content},
+	      category = #{category},
+	      attachment_path = #{attachmentPath},
+	      admin_reply = #{admin_reply},
+	      replied_at = #{replied_at},
+	      status = #{status} <!-- ✅ 상태도 함께 수정되도록 추가 -->
+	  WHERE report_id = #{report_id}
+	</update>
+	
+	<update id="updateStatus" parameterType="com.busroute.domain.ReportVO">
+	  UPDATE tb_report
+	  SET status = #{status}
+	  WHERE report_id = #{report_id}
+	</update>
+	
+	<!-- 삭제 -->
+	<delete id="delete" parameterType="int">
+	  DELETE FROM tb_report WHERE report_id = #{report_id}
+	</delete>
+
+  
+  <!-- 마이페이지 접수 내역 -->
+	<select id="findReportByUser" resultType="com.busroute.domain.ReportVO">
+	select *
+	from tb_report
+	where user_id = #{userid}
+	order by created_at desc
+	limit 5
+	</select>
+	
+	
+	<select id="getDailyReportStats" resultType="map">
+	  SELECT DATE_FORMAT(created_at, '%Y-%m-%d') AS day,
+	         COUNT(*) AS count
+	  FROM tb_report
+	  <where>
+	    <if test="category != null and category != ''">
+	      category = #{category}
+	    </if>
+	    <if test="from != null and from != ''">
+	      AND created_at &gt;= #{from}
+	    </if>
+	    <if test="to != null and to != ''">
+	      AND created_at &lt;= #{to}
+	    </if>
+	  </where>
+	  GROUP BY day
+	  ORDER BY day
+	</select>
+	
+	<select id="getCategoryStats" resultType="map">
+	  SELECT category, COUNT(*) AS count
+	  FROM tb_report
+	  GROUP BY category
+	</select>
+	
+	
+	
+	<!-- 전체 건수 -->
+	<select id="getTotalCountWithFilter" parameterType="map" resultType="int">
+	  SELECT COUNT(*) FROM tb_report
+	  <where>
+	    <if test="category != null and category != ''">
+	      category = #{category}
+	    </if>
+	    <if test="from != null and from != ''">
+	      AND DATE(created_at) &gt;= #{from}
+	    </if>
+	    <if test="to != null and to != ''">
+	      AND DATE(created_at) &lt;= #{to}
+	    </if>
+	  </where>
+	</select>
+	
+	<!-- 상태별 통계 -->
+	<select id="getStatusStats" parameterType="map" resultType="map">
+	    SELECT status, COUNT(*) AS count
+	    FROM tb_report
+	    WHERE 1=1
+	    <if test="category != null and category != ''">
+	      AND category = #{category}
+	    </if>
+	    <if test="from != null and from != ''">
+	      AND DATE(created_at) &gt;= #{from}
+	    </if>
+	    <if test="to != null and to != ''">
+	      AND DATE(created_at) &lt;= #{to}
+	    </if>
+	    GROUP BY status
+	</select>
+	
+		
+	<select id="getAverageProcessSeconds" resultType="int">
+	  SELECT AVG(TIMESTAMPDIFF(SECOND, created_at, replied_at))
+	  FROM tb_report
+	  WHERE replied_at IS NOT NULL
+	</select>
+	
+	
+	<sql id="hour_table">
+    SELECT n AS hour FROM (
+      SELECT 0 n UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3
+      UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7
+      UNION ALL SELECT 8 UNION ALL SELECT 9 UNION ALL SELECT 10 UNION ALL SELECT 11
+      UNION ALL SELECT 12 UNION ALL SELECT 13 UNION ALL SELECT 14 UNION ALL SELECT 15
+      UNION ALL SELECT 16 UNION ALL SELECT 17 UNION ALL SELECT 18 UNION ALL SELECT 19
+      UNION ALL SELECT 20 UNION ALL SELECT 21 UNION ALL SELECT 22 UNION ALL SELECT 23
+    ) AS hours
+  </sql>
+
+	<select id="selectHourlyCreatedCounts" resultType="map">
+	  SELECT h.hour,
+	         IFNULL(r.cnt, 0) AS cnt
+	  FROM
+	    (<include refid="hour_table"/>) h
+	    LEFT JOIN (
+	      SELECT HOUR(created_at) AS hr, COUNT(*) AS cnt
+	      FROM tb_report  <!-- ✅ 테이블명 수정 -->
+	      GROUP BY HOUR(created_at)
+	    ) r ON h.hour = r.hr
+	  ORDER BY h.hour
+	</select>
+	
+	<select id="selectHourlyRepliedCounts" resultType="map">
+	  SELECT h.hour,
+	         IFNULL(r.cnt, 0) AS cnt
+	  FROM
+	    (<include refid="hour_table"/>) h
+	    LEFT JOIN (
+	      SELECT HOUR(replied_at) AS hr, COUNT(*) AS cnt
+	      FROM tb_report  <!-- ✅ 테이블명 수정 -->
+	      WHERE replied_at IS NOT NULL
+	      GROUP BY HOUR(replied_at)
+	    ) r ON h.hour = r.hr
+	  ORDER BY h.hour
+	</select>
+
+	<select id="countReportsByUser" resultType="map">
+		SELECT 
+			status AS status, ifnull(COUNT(*), 0) AS cnt
+		FROM tb_report
+		WHERE user_id = #{userid}
+		GROUP BY status
+	</select>
+	
+	
+	<select id="getCompletionRate" resultType="double">
+	  SELECT 
+	    (SUM(CASE WHEN status = '완료' THEN 1 ELSE 0 END) / COUNT(*)) * 100
+	  FROM tb_report
+	</select>
+
+</mapper>

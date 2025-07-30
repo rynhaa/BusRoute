@@ -1,0 +1,23 @@
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css");
+@charset "UTF-8";
+  * {
+	 font-family: 'Pretendard', sans-serif;
+  }
+  body {
+   	font-family: 'Pretendard', sans-serif;
+    background-color: rgb(212, 241, 255);
+    margin: 0px;
+  }
+
+  h3 {
+    text-align: center;
+    font-size: 36px;
+    color: #333;
+    margin-bottom: 30px;
+  }
+  
+  #wrapper {
+  	margin-top:80px;
+  	justify-content: center;
+  	padding-bottom: 50px;
+  }

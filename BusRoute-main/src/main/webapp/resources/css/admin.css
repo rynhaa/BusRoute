@@ -1,0 +1,53 @@
+@charset "UTF-8";
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css");
+* {
+	font-family: 'Pretendard', sans-serif;
+}
+body {
+  	font-family: 'Pretendard', sans-serif;
+  	background-color: #f8f9fa;
+}
+.sidebar {
+	width: 220px;
+	height: 100vh;
+	position: fixed;
+	overflow-y: auto;
+	scrollbar-width: thin;
+}
+ main {
+    margin-left: 220px;
+}
+.card {
+    border: none;
+    border-radius: 10px;
+}
+.nav-link.active {
+    background-color: rgba(158, 109, 224, 0.4);
+    font-weight: bold;
+    border-radius: 4px;
+}
+.sidebar .nav-link:hover {
+  background-color: #6c75f3;
+  border-radius: 4px;
+  color: white;
+}
+.sidebar .nav-link {
+   padding: 6px 12px;
+   margin-bottom : 6px;
+}
+#session-timer {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+}
+.session-box {
+    background-color: #fff3cd;
+    color: #856404;
+    padding: 12px 20px;
+    border: 1px solid #ffeeba;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    font-size: 15px;
+    font-family: 'Segoe UI', sans-serif;
+}

@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.busroute.mapper.RouteMapper">
+	<!-- 정류장 목록 -->
+	<select id="selectAllStations"
+		resultType="com.busroute.domain.StationVO">
+		SELECT
+		sttn_id
+		,bims_id
+		,sttn_nm
+		,sttn_arsno
+		,latitude
+		,longitude
+		,city_code
+		FROM tb_station
+		ORDER BY sttn_nm
+	</select>
+
+	<select id="selectAllStationsWithFavorite"
+		resultType="com.busroute.domain.StationVO">
+		SELECT
+		s.sttn_id,
+		s.bims_id,
+		s.sttn_nm,
+		s.sttn_arsno,
+		s.latitude,
+		s.longitude,
+		s.city_code,
+		CASE
+		WHEN f.user_num IS NOT NULL
+		THEN 1
+		ELSE 0
+		END AS is_favorite
+		FROM
+		tb_station s
+		LEFT JOIN
+		tb_user_favorite_station f
+		ON s.sttn_id = f.sttn_id AND f.user_num =
+		#{unum}
+		ORDER BY
+		is_favorite DESC,
+		s.sttn_nm
+	</select>
+
+	<!-- 즐겨찾기 포함 정류장 검색 -->
+	<select id="searchStationsWithFavorite"
+		resultType="com.busroute.domain.StationVO">
+		SELECT
+		s.sttn_id,
+		s.bims_id,
+		s.sttn_nm,
+		s.sttn_arsno,
+		s.latitude,
+		s.longitude,
+		s.city_code,
+		CASE
+		WHEN f.user_num IS NOT NULL THEN 1
+		ELSE 0
+		END AS is_favorite
+		FROM
+		tb_station s
+		LEFT JOIN
+		tb_user_favorite_station f
+		ON s.sttn_id = f.sttn_id AND f.user_num = #{unum}
+		WHERE
+		s.city_code =
+		#{cityCode}
+		<if test="keyword != null and keyword != ''">
+			AND (
+			s.sttn_nm LIKE CONCAT('%', #{keyword}, '%') OR
+			s.sttn_arsno LIKE CONCAT('%', #{keyword}, '%')
+			)
+		</if>
+		ORDER BY
+		is_favorite DESC,
+		s.sttn_nm
+	</select>
+
+	<!-- 정류장 검색 -->
+	<select id="searchStations"
+		resultType="com.busroute.domain.StationVO">
+		SELECT
+		sttn_id
+		,bims_id
+		,sttn_nm
+		,sttn_arsno
+		,latitude
+		,longitude
+		,city_code
+		FROM tb_station
+		WHERE city_code = #{cityCode}
+		<if test="keyword != null and keyword != ''">
+			AND (
+			sttn_nm LIKE CONCAT('%', #{keyword}, '%') OR
+			sttn_arsno LIKE CONCAT('%', #{keyword}, '%')
+			)
+		</if>
+		ORDER BY sttn_nm
+	</select>
+
+	<select id="selectBusByRouteId"
+		resultType="com.busroute.domain.BusVO">
+		SELECT
+		route_id,
+		bus_number,
+		start_station_name,
+		end_station_name,
+		city_code
+		FROM tb_bus
+		WHERE route_id = #{routeId}
+	</select>
+
+	<!-- 버스도착정보 -->
+	<select id="selectBusListByNodeNo" parameterType="map"
+		resultType="com.busroute.domain.BusVO">
+		SELECT
+		route_id,
+		bus_number,
+		start_station_name,
+		end_station_name,
+		city_code
+		FROM tb_bus
+		WHERE route_id IN
+		<foreach collection="list" item="nodeNo" open="("
+			separator="," close=")">
+			#{nodeNo}
+		</foreach>
+		AND city_code = #{cityCode}
+	</select>
+
+	<!-- 버스도착정보 즐겨찾기 -->
+	<select id="selectBusListByNodeNoWithFavorite"
+		parameterType="map" resultType="com.busroute.domain.BusVO">
+		SELECT
+		b.route_id,
+		b.bus_number,
+		b.start_station_name,
+		b.end_station_name,
+		b.city_code,
+		CASE WHEN f.user_num IS NOT NULL THEN 1
+		ELSE 0 END AS is_favorite
+		FROM tb_bus b
+		LEFT JOIN tb_user_favorite_route
+		f
+		ON b.route_id = f.route_id
+		AND f.user_num = #{unum}
+		WHERE b.route_id IN
+		<foreach collection="list" item="nodeNo" open="("
+			separator="," close=")">
+			#{nodeNo}
+		</foreach>
+		AND b.city_code = #{cityCode}
+	</select>
+
+
+	<!-- 버스 목록 조회 -->
+	<select id="selectBusListByCity"
+		resultType="com.busroute.domain.BusVO">
+		SELECT * FROM tb_bus
+		WHERE city_code = #{cityCode}
+		<if test="keyword != null and keyword != ''">
+			AND (
+			bus_number LIKE CONCAT('%', #{keyword}, '%') OR
+			start_station_name LIKE CONCAT('%', #{keyword}, '%') OR
+			end_station_name LIKE CONCAT('%', #{keyword}, '%')
+			)
+		</if>
+		ORDER BY bus_number
+	</select>
+
+	<select id="getBusListByCityWithFavorite"
+		resultType="com.busroute.domain.BusVO">
+		SELECT
+		b.*,
+		CASE
+		WHEN f.user_num IS NOT NULL THEN 1
+		ELSE 0
+		END AS
+		is_favorite
+		FROM
+		tb_bus b
+		LEFT JOIN
+		tb_user_favorite_route f
+		ON b.route_id
+		= f.route_id
+		<if test="unum != null">
+			AND f.user_num = #{unum}
+		</if>
+		WHERE
+		b.city_code = #{cityCode}
+		<if test="keyword != null and keyword != ''">
+			AND (
+			b.bus_number LIKE CONCAT('%', #{keyword}, '%') OR
+			b.start_station_name LIKE CONCAT('%', #{keyword}, '%') OR
+			b.end_station_name LIKE CONCAT('%', #{keyword}, '%')
+			)
+		</if>
+		ORDER BY
+		is_favorite DESC,
+		b.bus_number ASC
+	</select>
+
+	<!-- 노선 정류장 목록 -->
+	<select id="selectStationByRouteId"
+		resultType="com.busroute.domain.StationVO">
+		SELECT
+		s.sttn_nm AS sttn_nm,
+		s.sttn_arsno AS sttn_arsno,
+		s.latitude AS latitude,
+		s.longitude AS longitude,
+		rs.route_station_id AS
+		route_station_id,
+		rs.sttn_id AS sttn_id,
+		rs.station_order AS
+		station_order,
+		rs.direction AS direction,
+		rs.city_code AS city_code,
+		rs.distance_km AS distance_km,
+		rs.estimated_time_min AS
+		estimated_time_min,
+		rs.route_id AS route_id
+		FROM
+		tb_route_station rs
+		JOIN
+		tb_station s ON rs.sttn_id = s.sttn_id
+		WHERE rs.route_id = #{routeId}
+		ORDER BY rs.station_order
+	</select>
+
+	<!-- 해당 버스별 전체 노선 지도 그리기 용 -->
+	<select id="getStationsByRouteId"
+		resultType="com.busroute.domain.StationVO">
+		SELECT
+		s.sttn_id AS sttn_id,
+		s.sttn_nm AS sttn_nm,
+		s.latitude
+		AS latitude,
+		s.longitude AS longitude,
+		s.city_code AS city_code,
+		rs.station_order AS station_order
+		FROM tb_route_station rs
+		JOIN
+		tb_station s ON rs.sttn_id = s.sttn_id
+		WHERE rs.route_id = #{routeId}
+		ORDER BY rs.station_order ASC
+	</select>
+
+
+	<select id="getRouteListByCityCode" resultType="com.busroute.domain.BusVO" 
+		parameterType="int">
+		SELECT DISTINCT b.bus_number, b.route_id
+		FROM tb_actual_boarding_new2 ab
+		JOIN tb_bus b ON ab.route_id = b.route_id
+		WHERE b.city_code = #{cityCode}
+		ORDER BY b.bus_number
+	</select>
+
+
+</mapper>

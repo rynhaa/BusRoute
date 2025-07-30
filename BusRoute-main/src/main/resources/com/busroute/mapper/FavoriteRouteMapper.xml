@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.busroute.mapper.FavoriteRouteMapper">
+	<select id="findFavorite" resultType="com.busroute.domain.FavoriteRouteVO">
+        SELECT
+        	favorite_id AS favoriteId,
+	        user_num AS userNum,
+	        route_id AS routeId,
+	        created_at AS createdAt
+        FROM tb_user_favorite_route
+        WHERE user_num = #{userNum}
+          AND route_id = #{routeId}
+    </select>
+
+    <insert id="insertFavorite">
+        INSERT INTO tb_user_favorite_route (user_num, route_id)
+        VALUES (#{userNum}, #{routeId})
+    </insert>
+
+    <delete id="deleteFavorite">
+        DELETE FROM tb_user_favorite_route
+        WHERE user_num = #{userNum}
+          AND route_id = #{routeId}
+    </delete>
+    
+	<select id="findFavoriteStation" resultType="com.busroute.domain.FavoriteRouteVO">
+        SELECT 
+        	favorite_id AS favoriteId,
+	        user_num AS userNum,
+	        sttn_id AS sttnId,
+	        created_at AS createdAt
+        FROM tb_user_favorite_station
+        WHERE user_num = #{userNum}
+          AND sttn_id = #{sttnId}
+    </select>
+
+    <insert id="insertFavoriteStation">
+        INSERT INTO tb_user_favorite_station (user_num, sttn_id)
+        VALUES (#{userNum}, #{sttnId})
+    </insert>
+
+    <delete id="deleteFavoriteStation">
+        DELETE FROM tb_user_favorite_station
+        WHERE user_num = #{userNum}
+          AND sttn_id = #{sttnId}
+    </delete>
+    
+    <select id="selectFavoriteBusList" resultType="com.busroute.domain.FavoriteRouteVO">
+        SELECT 
+        	fr.favorite_id AS favoriteId,
+	        fr.user_num AS userNum,
+	        fr.route_id AS routeId,
+	        fr.created_at AS createdAt,
+	        b.bus_number AS busNumber,
+	        b.bus_type AS busType,
+	        b.city_code AS cityCode
+        FROM tb_user_favorite_route fr JOIN tb_bus b
+        ON fr.route_id = b.route_id
+        WHERE fr.user_num = #{userNum}
+    </select>
+    
+    <select id="selectFavoriteStationList" resultType="com.busroute.domain.FavoriteRouteVO">
+        SELECT 
+        	fs.favorite_id AS favoriteId,
+	        fs.user_num AS userNum,
+	        fs.sttn_id AS sttnId,
+	        fs.created_at AS createdAt,
+	        s.sttn_nm AS sttnNm,
+	        s.sttn_arsno AS sttnArsno,
+	        s.city_code AS cityCode
+        FROM tb_user_favorite_station fs JOIN tb_station s
+        ON fs.sttn_id = s.sttn_id
+        WHERE fs.user_num = #{userNum}
+    </select>
+</mapper>

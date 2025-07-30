@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+  <mapper namespace="com.busroute.mapper.BoardMapper">
+  
+  
+  <resultMap id="BoardResultMap" type="com.busroute.domain.BoardVO">
+    <id property="board_id" column="board_id" />
+    <result property="type" column="type" />
+    <result property="title" column="title" />
+    <result property="content" column="content" />
+    <result property="writer_id" column="writer_id" />
+    <result property="view_count" column="view_count" />
+    <result property="pinned" column="is_pinned" /> <!-- 여기 매핑 -->
+    <result property="created_at" column="created_at" />
+    <result property="updated_at" column="updated_at" />
+</resultMap>
+  
+  
+  
+  	<select id="list" resultType="com.busroute.domain.BoardVO">	<!-- resultType로 BoardVO 에 담는다는걸 설정 -->
+  		select * from tb_board order by board_id desc
+  	</select>
+  	
+	<select id="getListWithPaging" resultMap="BoardResultMap">
+	  select * from( 
+	    select @rownum:=@rownum+1 as rownum, b.*
+	    from (select @rownum:=0) as rownumTable, tb_board b
+	
+	    <where>
+	      <choose>
+	        <when test="type=='T'.toString()">
+	          title like concat('%',#{keyword},'%')
+	        </when>
+	        <when test="type=='C'.toString()">
+	          content like concat('%',#{keyword},'%')
+	        </when>
+	      </choose>
+	    </where>
+	
+	    order by is_pinned desc, board_id desc
+	  ) as rownumBoardList
+	
+	  <![CDATA[
+	    where rownum > (#{pageNum} - 1 ) * 10 and rownum <= (#{pageNum} * 10)
+	  ]]>
+	</select>
+	
+	
+	
+	
+  	
+  	<select id="getTotalCount" resultType="int">
+  		select count(*) from tb_board
+  		
+			<choose>
+				<when test="type=='T'.toString()">
+					where title like concat('%',#{keyword},'%')
+				</when>
+				<when test="type=='C'.toString()">
+					where content like concat('%',#{keyword},'%')
+				</when>
+			</choose>
+
+  	</select>
+  	
+  	
+  	
+  	
+	<select id="read" resultMap="BoardResultMap">
+	  select * from tb_board where board_id = #{board_id}
+	</select>
+  	
+  	<update id="update">
+  		update tb_board
+		set title = #{title},
+			content = #{content},
+		    updated_at = sysdate()
+		where board_id = #{board_id}    
+;
+  	</update>
+  	
+  	<update id="CountUpdate">
+  		
+  		update tb_board
+  		set view_count = view_count + 1
+  		where board_id = #{board_id}
+  	
+  	</update>
+  	
+  	
+  	
+  	<delete id="delete">
+  		delete from tb_board
+  		where board_id = #{board_id}
+  	</delete>
+  	
+  	
+  	<insert id="insert">
+  		insert into tb_board(title, content, writer_id)
+  		values(#{title}, #{content}, #{writer_id})
+  	</insert>
+  	
+  	<insert id="insertSelectKey">
+  		
+  		<selectKey keyProperty = "board_id" order="BEFORE" resultType="int">
+  			select ifnull(max(board_id),0) +1 board_id from tb_board
+  		</selectKey>
+  		
+  		insert into tb_board(board_id, title, content, writer_id)
+  		values(#{board_id}, #{title}, #{content}, #{writer_id})
+  	
+  	</insert>
+  	
+
+	<!-- 전체 게시글 고정 해제 -->
+	<update id="unpinAll">
+	    UPDATE tb_board SET is_pinned = FALSE WHERE is_pinned = TRUE
+	</update>
+	
+	<!-- 선택된 게시글만 고정 -->
+	<update id="pinBoards" parameterType="list">
+	    UPDATE tb_board SET is_pinned = TRUE WHERE board_id IN
+	    <foreach collection="list" item="id" open="(" separator="," close=")">
+	        #{id}
+	    </foreach>
+	</update>
+	
+	
+	<!-- 선택된 게시글만 고정 해제 -->
+	<update id="unpinBoards" parameterType="list">
+	    UPDATE tb_board SET is_pinned = FALSE WHERE board_id IN
+	    <foreach collection="list" item="id" open="(" separator="," close=")">
+	        #{id}
+	    </foreach>
+	</update>
+	
+	
+	<!-- 게시글 하나의 is_pinned 상태 변경 -->
+	<update id="updatePinStatus" parameterType="map">
+	  UPDATE tb_board
+	  SET is_pinned = #{pinned}
+	  WHERE board_id = #{boardId}
+	</update>
+  	
+  	
+  </mapper>

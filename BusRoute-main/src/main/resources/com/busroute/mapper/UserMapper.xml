@@ -1,0 +1,396 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.busroute.mapper.UserMapper">
+
+<select id="findById" resultType="com.busroute.domain.UserVO" parameterType="String">
+select 
+*
+from 
+tb_user 
+where
+userid = #{userid} 
+</select>
+
+
+<!-- 회원가입 -->
+<insert id="join" >
+insert into tb_user(userid, username, phone, password, email, address)
+values (#{userid},#{username},#{phone},#{password},#{email},#{address}) 
+</insert>
+
+<!-- 아이디 중복 체크 -->
+<select id="idCheck" resultType="int" parameterType="String">
+select count(*)
+from tb_user
+where userid = #{userid}
+</select>
+
+<!-- 이메일 중복 체크 -->
+<select id="emailCheck" resultType="int" parameterType="String">
+select count(*)
+from tb_user
+where email = #{email}
+</select>
+
+<!-- 개인정보 수정 -->
+<update id="edit">
+update tb_user
+set username = #{username}, phone = #{phone}, 
+	email = #{email}, address = #{address}
+<if test = "password != null and password != ''">
+	, password = #{password}
+	, password_updated_at = now()
+</if>
+where userid = #{userid}
+</update>
+
+
+<!-- 마지막 로그인 -->
+<update id="updateLastLogin" parameterType="String">
+update tb_user 
+set last_login_at = now()
+where userid = #{userid}
+</update>
+
+<!-- 소셜 가입 -->
+<insert id="insert">
+insert into tb_user(userid, username, phone, password, email, address)
+values (#{userid},#{username},#{phone},#{password},#{email},#{address}) 
+</insert>
+
+<!-- 관리자 - 사용자관리 -->
+<select id="selectAllUsers" resultType="com.busroute.domain.UserVO">
+	SELECT
+		unum
+		,userid
+		,username
+		,phone
+		,password
+		,email
+		,address
+		,role
+		,created_at AS create_at
+		,password_updated_at
+		,is_deleted AS is_deleted
+		,last_login_at
+	FROM tb_user
+	WHERE userid is not null
+	AND role != 'ADMIN'
+	<if test="keyword != null and keyword != '' and type != null and type != ''">
+        AND ${type} LIKE CONCAT('%', #{keyword}, '%')
+    </if>
+	<if test="is_deleted != null and is_deleted != ''">
+        AND is_deleted = #{is_deleted}
+    </if>
+	ORDER BY unum DESC
+	LIMIT #{offset}, #{pageSize}
+</select>
+
+<select id="selectCountAllUsers" resultType = "int">
+	SELECT
+		COUNT(*)
+	FROM tb_user
+	WHERE userid is not null
+	AND role != 'ADMIN'
+	<if test="keyword != null and keyword != '' and type != null and type != ''">
+        AND ${type} LIKE CONCAT('%', #{keyword}, '%')
+    </if>
+    <if test="is_deleted != null and is_deleted != ''">
+        AND is_deleted = #{is_deleted}
+    </if>
+</select>
+
+<select id="selectUserByUnum" resultType="com.busroute.domain.UserVO">
+	SELECT
+		unum
+		,userid
+		,username
+		,phone
+		,password
+		,email
+		,address
+		,role
+		,created_at AS create_at
+		,password_updated_at
+		,is_deleted AS is_deleted
+		,last_login_at
+	FROM tb_user
+	WHERE unum = #{unum}
+</select>
+
+<update id="updateUserInfo">
+	UPDATE tb_user
+	  SET
+	    email = #{email},
+	    phone = #{phone},
+	    address = #{address},
+	    is_deleted = #{is_deleted}
+  	WHERE unum = #{unum}
+</update>
+
+<update id="resetPassword">
+	UPDATE tb_user
+	  SET
+	    password = #{encoded},
+	    password_updated_at = CURRENT_TIMESTAMP()
+  	WHERE unum = #{unum}
+</update>
+
+<select id="countByEmailExcludingUnum" resultType="int">
+    SELECT 
+    	COUNT(*) 
+    FROM tb_user 
+    WHERE email = #{email}
+    AND unum != #{unum}
+</select>
+
+
+<!-- SELECT
+		unum,
+		userid,
+		username,
+		role
+	FROM tb_user
+	WHERE is_deleted = FALSE
+	AND role != 'ADMIN'
+	<if test="keyword != null and keyword != '' and type != null and type != ''">
+        AND ${type} LIKE CONCAT('%', #{keyword}, '%')
+    </if>
+    <if test="search_role != null and search_role != ''">
+        AND role = #{search_role}
+    </if>
+	ORDER BY unum DESC -->
+<select id="selectAllUsersForRoleChange" resultType="com.busroute.domain.UserVO">
+	SELECT 
+	    u.unum AS unum,
+	    u.username AS username,
+	    u.userid AS userid,
+	    u.role AS role,
+	    rl.changed_at AS applied_at
+	FROM 
+	    tb_user u
+	LEFT JOIN (
+	    SELECT r1.*
+	    FROM tb_role_log r1
+	    JOIN (
+	        SELECT target_unum, MAX(changed_at) AS latest_change
+	        FROM tb_role_log
+	        GROUP BY target_unum
+	    ) r2
+	    ON r1.target_unum = r2.target_unum AND r1.changed_at = r2.latest_change
+	) rl
+	ON u.unum = rl.target_unum
+	WHERE u.is_deleted = FALSE
+	AND u.role != 'ADMIN'
+    <if test="keyword != null and keyword != '' and type != null and type != ''">
+		AND 
+		<choose>
+			<when test="type == 'username'">
+				u.username LIKE CONCAT('%', #{keyword}, '%')
+			</when>
+			<when test="type == 'userid'">
+				u.userid LIKE CONCAT('%', #{keyword}, '%')
+			</when>
+		</choose>
+	</if>
+	<if test="search_role != null and search_role != ''">
+        AND u.role = #{search_role}
+    </if>
+	ORDER BY u.unum DESC
+	LIMIT #{offset}, #{pageSize}
+</select>
+
+<select id="selectAdminForRoleChange" resultType="com.busroute.domain.UserVO">
+	SELECT
+		unum,
+		userid,
+		username,
+		role,
+		created_at AS create_at,
+		last_login_at,
+		is_deleted
+	FROM tb_user
+	WHERE role = 'ADMIN'
+	<if test="keyword != null and keyword != '' and type != null and type != ''">
+        AND ${type} LIKE CONCAT('%', #{keyword}, '%')
+    </if>
+    <if test="is_deleted != null and is_deleted != ''">
+        AND is_deleted = #{is_deleted}
+    </if>
+	ORDER BY unum DESC
+</select>
+
+<update id="updateUserRole">
+	UPDATE tb_user
+	SET
+	role = #{newRole}
+	WHERE unum = #{unum}
+</update>
+
+<insert id="insertNewAdminCreate">
+	INSERT
+	INTO tb_user
+		(userid, username, email, phone, address, role, password) 
+	VALUES
+		(#{userid}, #{username}, #{email}, #{phone}, #{address}, 'ADMIN', #{password})
+</insert>
+
+<update id="updateAdminNotAtive">
+	UPDATE tb_user
+	SET
+	is_deleted = 1
+	WHERE unum = #{unum}
+</update>
+
+<update id="updateAdminActivate">
+	UPDATE tb_user
+	SET
+	is_deleted = 0
+	WHERE unum = #{unum}
+</update>
+
+<update id="updateAdmininfo">
+	UPDATE tb_user
+	SET
+	username = #{username},
+	password = #{password}, 
+	email = #{email}, 
+	phone = #{phone}, 
+	address = #{address}
+	WHERE unum = #{unum}
+</update>
+
+<select id="getSuspendedUsers" resultType="com.busroute.domain.UserVO">
+    SELECT
+        u.unum AS unum,
+        u.username AS username,
+        u.userid AS userid,
+        u.role AS current_role,
+        rl.before_role AS before_role,
+        rl.after_role AS after_role,
+        rl.changed_at AS changed_at,
+        rl.change_reason AS change_reason,
+        rl.changed_by AS changed_by
+    FROM tb_user u
+    JOIN tb_role_log rl ON rl.log_id = (
+        SELECT log_id FROM tb_role_log
+        WHERE target_unum = u.unum
+        ORDER BY changed_at DESC
+        LIMIT 1
+    )
+    <where>
+        <if test="type != null and keyword != null and keyword != ''">
+            <choose>
+                <when test="type == 'username'">
+                    u.username LIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <when test="type == 'userid'">
+                    u.userid LIKE CONCAT('%', #{keyword}, '%')
+                </when>
+                <when test="type == 'reason'">
+                    rl.change_reason LIKE CONCAT('%', #{keyword}, '%')
+                </when>
+            </choose>
+        </if>
+        <if test="role != null and role != ''">
+            AND rl.after_role = #{role}
+        </if>
+    </where>
+    ORDER BY rl.changed_at DESC
+    LIMIT #{offset}, #{pageSize}
+</select>
+
+
+<select id="countSuspendedUsers" resultType="int">
+	SELECT 
+	  COUNT(*)
+	FROM tb_user u
+    JOIN tb_role_log rl ON rl.log_id = (
+        SELECT log_id FROM tb_role_log
+        WHERE target_unum = u.unum
+        ORDER BY changed_at DESC
+        LIMIT 1
+    )
+	<where>
+	    <if test="type != null and keyword != null and keyword != ''">
+	      	<choose>
+	        	<when test="type == 'username'">
+	          	u.username LIKE CONCAT('%', #{keyword}, '%')
+	        	</when>
+	        	<when test="type == 'userid'">
+		          u.userid LIKE CONCAT('%', #{keyword}, '%')
+		        </when>
+		        <when test="type == 'reason'">
+		          rl.change_reason LIKE CONCAT('%', #{keyword}, '%')
+		        </when>
+	      	</choose>
+	    </if>
+	    <if test="role != null and role != ''">
+	      	AND rl.after_role = #{role}
+	    </if>
+  	</where>
+</select>
+
+<!-- 사용자 통계  -->
+<!-- 총 사용자 수 -->
+<select id="getTotalUserCount" resultType="int">
+    SELECT COUNT(*) FROM tb_user
+</select>
+
+<!-- 탈퇴 사용자 수 -->
+<select id="getDeletedUserCount" resultType="int">
+    SELECT COUNT(*) FROM tb_user WHERE is_deleted = TRUE
+</select>
+
+<!-- 최근 로그인 사용자 수 -->
+<select id="getRecentLoginUserCount" resultType="int">
+    SELECT COUNT(*) 
+    FROM tb_user 
+    WHERE last_login_at >= DATE_SUB(NOW(), INTERVAL #{days} DAY)
+</select>
+
+<!-- 월별 가입자 수 -->
+<select id="getMonthlySignups" resultType="com.busroute.domain.UserVO">
+    SELECT DATE_FORMAT(created_at, '%Y-%m') AS month, COUNT(*) AS count
+    FROM tb_user
+    GROUP BY month
+    ORDER BY month DESC
+</select>
+
+<!-- 최근 로그인 사용자 -->
+<select id="getRecentLoginUsers" resultType="com.busroute.domain.UserVO">
+    SELECT unum, userid, username, last_login_at
+    FROM tb_user
+    WHERE role = 'USER'
+    ORDER BY last_login_at DESC
+    LIMIT #{limit}
+</select>
+
+<!-- 지역(주소) 분포 -->
+<select id="getUserRegionDistribution" resultType="com.busroute.domain.UserVO">
+    SELECT region, COUNT(*) AS count
+	FROM (
+	    SELECT
+	        TRIM(SUBSTRING_INDEX(address, ' ', 2)) AS region
+	    FROM tb_user
+	    WHERE address IS NOT NULL AND address != ''
+	) AS region_mapped
+	GROUP BY region
+	ORDER BY count DESC
+</select>
+
+<!-- 권한별 수 -->
+<select id="getUserRoleCount" resultType="com.busroute.domain.UserVO">
+	SELECT 
+		role, COUNT(*) AS count
+	FROM tb_user
+	WHERE role IN ('USER', 'SUSPENDED')
+	GROUP BY role
+</select>
+
+<select id="findEmailByUserId" resultType="string">
+    SELECT email FROM tb_user WHERE userid = #{userId}
+</select>
+</mapper>

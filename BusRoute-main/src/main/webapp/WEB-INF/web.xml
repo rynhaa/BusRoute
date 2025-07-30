@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- <web-app version="2.5" xmlns="http://java.sun.com/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee https://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"> -->
+	
+	<!-- Web 버전 3.1 Setting -->
+	<web-app		
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+		xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_3_1.xsd"
+		id="WebApp_ID" version="3.1">		
+
+	<!-- The definition of the Root Spring Container shared by all Servlets and Filters -->
+	<context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>/WEB-INF/spring/root-context.xml</param-value>
+	</context-param>
+	
+	<context-param>
+	    <param-name>tago.serviceKey</param-name>
+	    <param-value>8MKSzvAYUdvxxFyP3cZQwm4rpNPvWkQjdblENx33fbgSNhvGOrSjo42Wi2YQkpU+1v7ouq896gWnbP+CEga+wQ==</param-value>
+	    <!-- <param-value>8MKSzvAYUdvxxFyP3cZQwm4rpNPvWkQjdblENx33fbgSNhvGOrSjo42Wi2YQkpU%2B1v7ouq896gWnbP%2BCEga%2BwQ%3D%3D</param-value> -->
+	</context-param>
+	
+	
+	<!-- Creates the Spring Container shared by all Servlets and Filters -->
+	<listener>
+		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+	</listener>
+
+	<!-- Processes application requests -->
+	<servlet>
+	
+		<servlet-name>appServlet</servlet-name>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		<init-param>
+			<param-name>contextConfigLocation</param-name>
+			<param-value>/WEB-INF/spring/appServlet/servlet-context.xml</param-value>
+		</init-param>
+		<load-on-startup>1</load-on-startup>
+	
+	<!-- 파일 업로드와 관련된 셋팅 (servlet 안에 넣어야한다) -->
+		<multipart-config>
+			<location>C:\\upload\\temp</location>
+			<max-file-size>20971520</max-file-size>
+			<max-request-size>41943040</max-request-size>
+			<file-size-threshold>20971520</file-size-threshold>
+		</multipart-config>
+
+	</servlet>
+	
+		
+	<servlet-mapping>
+		<servlet-name>appServlet</servlet-name>
+		<url-pattern>/</url-pattern>
+	</servlet-mapping>
+	
+	 <filter>
+        <filter-name>encoding</filter-name>
+        <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+        <init-param>
+              <param-name>encoding</param-name>
+              <param-value>UTF-8</param-value>
+        </init-param>
+     </filter>
+	
+	<filter-mapping>
+		<filter-name>encoding</filter-name>
+		<servlet-name>appServlet</servlet-name>
+	</filter-mapping>
+	
+	<session-config>
+    	<session-timeout>30</session-timeout> <!-- 단위: 분 -->
+	</session-config>
+
+</web-app>

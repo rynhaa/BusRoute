@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.busroute.mapper.LogMapper">
+
+<select id="selectRoleChangeLogList" resultType="com.busroute.domain.RoleLogVO">
+	SELECT
+		role.log_id AS log_id
+		,role.target_unum AS target_unum
+		,target_user.userid AS target_userid
+		,target_user.username AS target_username
+		,role.changed_by AS changed_by
+		,admin_user.userid AS admin_userid
+		,admin_user.username AS admin_username
+		,role.before_role AS before_role
+		,role.after_role AS after_role
+		,role.change_reason AS change_reason
+		,role.changed_at AS changed_at
+		,role.change_type AS change_type
+	FROM tb_role_log role
+	JOIN tb_user target_user ON target_user.unum = role.target_unum
+	JOIN tb_user admin_user ON admin_user.unum = role.changed_by
+	WHERE 1=1
+	<choose>
+	    <when test="type == 'target_userid'">
+	        AND target_user.userid LIKE CONCAT('%', #{keyword}, '%')
+	    </when>
+	    <when test="type == 'target_username'">
+	        AND target_user.username LIKE CONCAT('%', #{keyword}, '%')
+	    </when>
+	    <when test="type == 'admin_userid'">
+	        AND admin_user.userid LIKE CONCAT('%', #{keyword}, '%')
+	    </when>
+	    <when test="type == 'admin_username'">
+	        AND admin_user.username LIKE CONCAT('%', #{keyword}, '%')
+	    </when>
+	</choose>
+    <if test="change_type != null and change_type != '' ">
+        AND role.change_type = #{change_type}
+    </if>
+    <if test="startDate != null and startDate != ''">
+    	AND DATE(role.changed_at) &gt;= #{startDate}
+	</if>
+	<if test="endDate != null and endDate != ''">
+	    AND DATE(role.changed_at) &lt;= #{endDate}
+	</if>
+	<choose>
+	  	<when test="sort == null or sort.equals('desc')">ORDER BY role.log_id DESC</when>
+	  	<when test="sort.equals('asc')">ORDER BY role.log_id ASC</when>
+	</choose>
+	LIMIT #{offset}, #{pageSize}
+</select>
+
+<select id="countRoleChangeLog" resultType="int">
+	SELECT
+		COUNT(*)
+	FROM tb_role_log role
+	JOIN tb_user target_user ON target_user.unum = role.target_unum
+	JOIN tb_user admin_user ON admin_user.unum = role.changed_by
+	WHERE 1=1
+	<choose>
+	    <when test="type == 'target_userid'">
+	        AND target_user.userid LIKE CONCAT('%', #{keyword}, '%')
+	    </when>
+	    <when test="type == 'target_username'">
+	        AND target_user.username LIKE CONCAT('%', #{keyword}, '%')
+	    </when>
+	    <when test="type == 'admin_userid'">
+	        AND admin_user.userid LIKE CONCAT('%', #{keyword}, '%')
+	    </when>
+	    <when test="type == 'admin_username'">
+	        AND admin_user.username LIKE CONCAT('%', #{keyword}, '%')
+	    </when>
+	</choose>
+	<if test="change_type != null and change_type != '' ">
+        AND role.change_type = #{change_type}
+    </if>
+    <if test="startDate != null and startDate != ''">
+    	AND DATE(role.changed_at) &gt;= #{startDate}
+	</if>
+	<if test="endDate != null and endDate != ''">
+	    AND DATE(role.changed_at) &lt;= #{endDate}
+	</if>
+</select>
+
+<insert id="insertRoleChangeLog">
+	INSERT INTO 
+		tb_role_log 
+		(target_unum, changed_by, before_role, after_role, change_reason, change_type)
+    VALUES 
+    	(#{unum}, #{adminUnum}, #{beforeRole}, #{newRole}, #{reason}, #{changeType})
+</insert>
+
+</mapper>

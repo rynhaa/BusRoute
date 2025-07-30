@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.busroute.mapper.BoardingMapper">
+
+	<resultMap id="BoardingDTOResultMap"
+		type="com.busroute.domain.BoardingDTO">
+		<result property="date" column="date" />
+		<result property="boarding" column="boarding" />
+	</resultMap>
+
+	<!-- 1. 일별 탑승 인원 합계 조회 -->
+	<select id="selectDailyBoardingStats"
+		resultMap="BoardingDTOResultMap" parameterType="map">
+		<![CDATA[
+		SELECT DATE_FORMAT(date_time, '%Y-%m-%d') AS date,
+		SUM(predicted_boarding) AS boarding
+		FROM tb_prediction
+		WHERE route_id = #{routeId}
+		 AND date_time >= #{startDate}
+      	AND date_time < DATE_ADD(#{endDate}, INTERVAL 1 DAY)
+		GROUP BY DATE(date_time)
+		ORDER BY date
+		]]>
+	</select>
+
+	<!-- 2. bus_number → route_id 변환 -->
+	<select id="selectRouteIdByBusNumber" resultType="string"
+		parameterType="string">
+		SELECT route_id
+		FROM tb_bus
+		WHERE bus_number =
+		#{busNumber}
+		LIMIT 1
+	</select>
+
+	<!-- 3. city_code별 노선 리스트 조회 -->
+	<select id="selectRouteListByCityCode" resultType="string"
+		parameterType="string">
+		SELECT bus_number
+		FROM tb_bus
+		WHERE city_code =
+		#{cityCode}
+		ORDER BY bus_number
+	</select>
+
+</mapper>

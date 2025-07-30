@@ -1,0 +1,53 @@
+@charset "UTF-8";
+   header {
+      position: relative;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      font-size: 20px;
+      color: #002744;
+      z-index: 100;
+      background-color : white;
+      padding: 12px 40px;
+    }
+
+    header nav a {
+      margin: 0 15px;
+      text-decoration: none;
+      color: #002744;
+      font-weight: bold;
+      vertical-align: middle;
+    }
+  
+  .btn1{
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+        text-decoration: none;
+        border: 2px solid #002744;
+        box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
+        background-color: white;
+        color: #002744;
+        margin:0px;
+    }
+    
+   #login{
+      	margin-left: 70px;
+    }
+    
+    #mypage{
+    	margin-left: 70px;
+    }
+    
+    #main{
+    	display:inline-block;
+    	margin-right:850px;
+    	margin-left:200px;
+    }
+    
+    

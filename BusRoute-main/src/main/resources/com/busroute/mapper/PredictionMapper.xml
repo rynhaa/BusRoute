@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.busroute.mapper.PredictionMapper">
+
+	<select id="predict"
+		resultType="com.busroute.domain.PredictionVO">
+		SELECT
+		route_id,
+		CASE
+		WHEN #{interval} = 'hour' THEN DATE_FORMAT(date_time, '%Y-%m-%d %H:00:00')
+		WHEN #{interval} = 'day' THEN DATE_FORMAT(date_time, '%Y-%m-%d
+		00:00:00')
+		WHEN #{interval} = 'week' THEN DATE_FORMAT(DATE_SUB(date_time, INTERVAL
+		(DAYOFWEEK(date_time)-1) DAY), '%Y-%m-%d 00:00:00')
+		ELSE DATE_FORMAT(date_time, '%Y-%m-%d %H:00:00')
+		END AS intervalTime,
+		model_name,
+		SUM(predicted_boarding) AS totalBoarding,
+		SUM(predicted_alighting) AS totalAlighting
+		FROM tb_prediction_sample
+		WHERE 1=1
+		<if test="region != null and region != ''">
+			AND region = #{region}
+		</if>
+		<if test="model != null and model != ''">
+			AND model_name = #{model}
+		</if>
+		<if test="routeId != null and routeId != ''">
+			AND route_id = #{routeId}
+		</if>
+		<if test="startDate != null and startDate != ''">
+			AND date_time &gt;= CONCAT(#{startDate}, ' 05:00:00')
+			AND date_time &lt; CONCAT(DATE_ADD(#{startDate}, INTERVAL 1 DAY ), ' 00:00:00')
+		</if>
+		GROUP BY intervalTime, route_id, model_name
+		ORDER BY intervalTime ASC
+	</select>
+
+</mapper>
