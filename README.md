@@ -98,10 +98,15 @@ API를 호출해 실시간으로 버스 정보를 받고, 불편 및 신고 접�
 
 ## 📷 주요 화면 스크린샷
 
-| 스케줄 캘린더 | 기사 배정 팝업 |
+| 버스 실시간 도착 정보 | 버스 노선 정보 |
 |---------------|----------------|
-| <img src="https://github.com/user-attachments/assets/0777ed1c-af12-42e1-aec5-58cb6a4b74dc" alt="스케줄 캘린더" width="400"/> | <img src="https://github.com/user-attachments/assets/5051e421-1bd5-453d-90d1-bb2695a72961" alt="기사 배정 팝업" width="400"/> |
-| 버스정류장 및 실시간 도착정보 | 승하차 예측 정보 |
+| <img width="400" alt="버스정류장_이미지" src="https://github.com/user-attachments/assets/b1296cca-b3b7-4a1c-8464-88cb42e0944a" /> | <img width="400" alt="버스노선이미지" src="https://github.com/user-attachments/assets/e0045893-066d-4bfc-a24a-a1bce978ea9c" /> |
+| 버스정류장 및 실시간 도착정보 | 버스 노선 정보 |
+
+| 불편 및 신고 접수 | 승하차 예측 정보 |
+|---------------|----------------|
+| <img width="400" alt="불편신고이미지" src="https://github.com/user-attachments/assets/78f7feda-b5ed-4294-aae7-456f933459c7" /> | <img width="400" alt="예측이미지" src="https://github.com/user-attachments/assets/dac1c789-f1a6-4041-8785-880ab3fcd113" />|
+| 불편 및 신고 접수 | 승하차 예측 정보 |
 
 
 ## 🧩 시스템 플로우
@@ -198,14 +203,7 @@ API를 호출해 실시간으로 버스 정보를 받고, 불편 및 신고 접�
 
 <div align="center">
 
-
+<video src="https://github.com/user-attachments/assets/7e0fed8a-9ecc-4215-8ba0-21d3e0e8811c" controls width="800"></video>
 
 </div>
-
-
-
-
-
-
-
 
